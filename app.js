@@ -5,15 +5,25 @@ const mongoose = require('mongoose');
 const { json } = require('express');
 const Product = require('./models/product')
 require('dotenv/config')
-const api = process.env.API_URL;
-const productRouter = require('./routers/products')
-
 
 
 //middleware
 app.use(express.json())
 app.use(morgan('tiny'))
-app.use(`${api}/product`,productRouter )
+
+
+//Routes
+const productRouter = require('./routers/products')
+const userRouter = require('./routers/users')
+
+
+const api = process.env.API_URL;
+
+
+app.use(`${api}/product`,productRouter)
+app.use(`${api}/users`,userRouter)
+
+
 
 
 
