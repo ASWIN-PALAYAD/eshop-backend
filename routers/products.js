@@ -69,7 +69,7 @@ router.post(`/`, async (req,res)=>{
         numReviews:req.body.numReviews,
         isFeatured:req.body.isFeatured
     })
-    //product = await product.save();
+    //product = await product.save(); check const and replace it with let then code wil run
     product.save()
     
     if(!product)
