@@ -5,10 +5,16 @@ const {Category} = require('../models/category')
 const mongoose = require('mongoose')
 
 
-//API for get all product list with details
+//API for get all product list with details or category wise
 
 router.get(`/`, async(req,res)=>{
-    const productList = await Product.find().populate('category')
+    //if request comes in the model of localhost:3000/api/v1/product?categories=447,497
+    let filter = {};
+    if(req.query.categories)
+    {
+        filter = {category: req.query.categories.split(',')}
+    }
+    const productList = await Product.find(filter).populate('category')
 
     if(!productList){
         res.status (500).json({success:false})
@@ -132,6 +138,19 @@ router.get('/get/count',async (req,res)=>{
     res.send({
         productCount : productCount
     })
+})
+
+//API for featured products
+
+router.get('/get/featured/:count',async (req,res)=>{
+    const count = req.params.count ? req.params.count : 0
+    const product = await Product.find({isFeatured:true}).limit(+count)
+
+    if(!product){
+        res.status(500).json({success:false})
+    }
+
+    res.send(product)
 })
 
 module.exports = router;

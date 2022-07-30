@@ -59,5 +59,14 @@ const productSchema = mongoose.Schema({
 
 })
 
+//removing _ on id parameter
+productSchema.virtual('id').get(function(){
+    return this._id.toHexString();
+});
+
+productSchema.set('toJSON',{
+    virtuals:true,
+})
+
 //creating model
 exports.Product = mongoose.model('PRODUCT',productSchema)

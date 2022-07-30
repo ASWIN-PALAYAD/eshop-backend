@@ -4,4 +4,13 @@ const orderSchema = mongoose.Schema({
 
 })
 
+//removing _ on id parameter
+orderSchema.virtual('id').get(function(){
+    return this._id.toHexString();
+});
+
+orderSchema.set('toJSON',{
+    virtuals:true,
+})
+
 exports.Order = mongoose.model('Order',orderSchema)
