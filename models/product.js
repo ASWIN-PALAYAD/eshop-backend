@@ -69,4 +69,4 @@ productSchema.set('toJSON',{
 })
 
 //creating model
-exports.Product = mongoose.model('PRODUCT',productSchema)
+exports.Product = mongoose.model('Product',productSchema)
