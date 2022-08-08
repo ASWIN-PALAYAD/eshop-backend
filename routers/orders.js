@@ -44,6 +44,14 @@ router.post('/',async (req,res)=>{
 
     const orderItemsIdsResolved = await orderItemsIds
 
+    const totalPrices = await Promise.all(orderItemsIdsResolved.map(async (orderItemId)=>{
+        const orderItem = await OrderItem.findById(orderItemId).populate('product','price');
+        const totalPrice = orderItem.product.price * orderItem.quantity;
+        return totalPrice
+    }))
+
+    const totalPrice = totalPrices.reduce((a,b)=> a+b,0)
+
     let order = new Order({
         orderItems: orderItemsIdsResolved,
         shippingAddress1: req.body.shippingAddress1,
@@ -53,7 +61,7 @@ router.post('/',async (req,res)=>{
         country: req.body.country,
         phone: req.body.phone,
         status:req.body.status,
-        totalPrice: req.body.totalPrice,
+        totalPrice: totalPrice,
         user:req.body.user
     })
     order = await order.save();
@@ -82,15 +90,58 @@ router.put('/:id',async (req,res)=>{
 
 //API for deleting an order
 router.delete('/:id',async (req,res)=>{
-    if(!mongoose.isValidObjectId(req.params.id)){
-        return res.status(00).send('Invalid order Id')
+    Order.findByIdAndRemove(req.params.id).then(async order =>{
+        if(order){
+            await order.orderItems.map(async orderItem =>{
+                await OrderItem.findByIdAndRemove(orderItem)
+            })
+            return res.status(200).json({success:true, message:'the order is deleted'})
+        }else{
+            return res.status(400).json({success:false, message:"The order is not deleted"})
+        }
+    }).catch(err =>{
+        return res.status(500).json({success:false, errore:err})
+    })
+})
+
+//API for geting total sale amount
+router.get('/get/totalsales',async (req,res)=>{
+    const totalsales = await Order.aggregate([
+        {
+            $group: {_id:null,totalsales : {$sum:'$totalPrice'}}
+        }
+    ])
+
+    res.send({totalsales:totalsales.pop().totalsales})
+})
+
+//API  for geting total sale items
+router.get('/get/count',async (req,res)=>{
+    const orderCount = await Order.countDocuments()
+     
+    if(!orderCount){
+        res.status(500).json({success:false})
     }
-    const order = await Order.findByIdAndRemove(req.params.id)
 
-    if(!order)
-    return res.status(400).json({success:false, message:"The order is not Deleted"});
+    res.send({
+        orderCount:orderCount
+    })
+})
 
-    res.status(200).json({success:true, message:'The order is deleted successfully'})
+//API for user order history 
+router.get('/get/userorders/:userid',async (req,res)=>{
+    const userOrderList = await Order.find({user:req.params.userid}).populate({
+        path:'orderItems',populate:{
+            path: 'product',populate:'category'
+        }
+    }).sort({'dateOrdered': -1})
+
+    if(!userOrderList){
+        res.status(500).json({success:false})
+    }
+
+    res.send(userOrderList)
+
 })
 
 
